@@ -1,0 +1,215 @@
+@using Microsoft.AspNetCore.Identity
+@using AcxiomCRM.Web.Models.Entities
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - AcxiomCRM Enterprise</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <!-- Custom CRM Theme CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    @if (SignInManager.IsSignedIn(User))
+    {
+        var currentUser = await UserManager.GetUserAsync(User);
+        var currentRole = (await UserManager.GetRolesAsync(currentUser!)).FirstOrDefault() ?? "User";
+
+        <div class="crm-wrapper">
+            <!-- Sidebar Navigation -->
+            <aside class="crm-sidebar" id="crmSidebar">
+                <div class="crm-sidebar-header">
+                    <div class="crm-brand-logo">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <div>
+                        <h1 class="crm-brand-title">AcxiomCRM</h1>
+                        <span style="font-size: 0.72rem; color: #94a3b8; font-weight: 500;">Enterprise Sales CRM</span>
+                    </div>
+                </div>
+
+                <div class="crm-sidebar-menu">
+                    <div class="crm-menu-header">Main</div>
+                    <a asp-controller="Dashboard" asp-action="Index" class="crm-nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <div class="crm-menu-header">CRM Lifecycle</div>
+                    <a asp-controller="Customers" asp-action="Index" class="crm-nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Customers" ? "active" : "")">
+                        <i class="bi bi-people"></i>
+                        <span>Customers</span>
+                    </a>
+                    <a asp-controller="Leads" asp-action="Index" class="crm-nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Leads" ? "active" : "")">
+                        <i class="bi bi-funnel"></i>
+                        <span>Leads</span>
+                    </a>
+                    <a asp-controller="Opportunities" asp-action="Index" class="crm-nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Opportunities" ? "active" : "")">
+                        <i class="bi bi-graph-up-arrow"></i>
+                        <span>Opportunities</span>
+                    </a>
+                    <a asp-controller="FollowUps" asp-action="Index" class="crm-nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "FollowUps" ? "active" : "")">
+                        <i class="bi bi-calendar-check"></i>
+                        <span>Follow-Ups</span>
+                    </a>
+                    <a asp-controller="Activities" asp-action="Index" class="crm-nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Activities" ? "active" : "")">
+                        <i class="bi bi-clock-history"></i>
+                        <span>Activities</span>
+                    </a>
+
+                    <div class="crm-menu-header">Analytics & Insights</div>
+                    <a asp-controller="Reports" asp-action="Index" class="crm-nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Reports" ? "active" : "")">
+                        <i class="bi bi-bar-chart-line"></i>
+                        <span>Reports</span>
+                    </a>
+
+                    @if (User.IsInRole(AppRoles.Admin) || User.IsInRole(AppRoles.Manager))
+                    {
+                        <div class="crm-menu-header">Administration</div>
+                        @if (User.IsInRole(AppRoles.Admin))
+                        {
+                            <a asp-controller="Users" asp-action="Index" class="crm-nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Users" ? "active" : "")">
+                                <i class="bi bi-person-gear"></i>
+                                <span>User Management</span>
+                            </a>
+                        }
+                        <a asp-controller="AuditLog" asp-action="Index" class="crm-nav-link @(ViewContext.RouteData.Values["Controller"]?.ToString() == "AuditLog" ? "active" : "")">
+                            <i class="bi bi-shield-lock"></i>
+                            <span>Audit Logs</span>
+                        </a>
+                    }
+
+                    <div class="crm-menu-header">Developer</div>
+                    <a href="/swagger" target="_blank" class="crm-nav-link">
+                        <i class="bi bi-code-slash"></i>
+                        <span>REST API Docs</span>
+                    </a>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <div class="crm-content-wrapper">
+                <!-- Topbar -->
+                <header class="crm-topbar">
+                    <div class="d-flex align-items-center gap-3">
+                        <button class="btn btn-sm btn-outline-secondary d-lg-none" type="button" id="sidebarToggle">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <h2 class="h5 mb-0 fw-bold text-dark">@ViewData["Title"]</h2>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- User Role Badge -->
+                        @if (currentRole == AppRoles.Admin)
+                        {
+                            <span class="badge badge-role-admin">Admin</span>
+                        }
+                        else if (currentRole == AppRoles.Manager)
+                        {
+                            <span class="badge badge-role-manager">Manager</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-role-sales">Sales Executive</span>
+                        }
+
+                        <!-- User Profile Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light border dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle text-primary fs-5"></i>
+                                <span class="fw-semibold">@(currentUser?.FullName ?? User.Identity?.Name)</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                <li class="px-3 py-2 border-bottom">
+                                    <div class="small text-muted">Signed in as</div>
+                                    <div class="fw-bold small text-truncate" style="max-width: 180px;">@User.Identity?.Name</div>
+                                </li>
+                                <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="p-1">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item text-danger d-flex align-items-center gap-2 rounded">
+                                            <i class="bi bi-box-arrow-right"></i> Sign Out
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Page Body -->
+                <main class="crm-main-content">
+                    <!-- Notification Alerts -->
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                            <i class="bi bi-check-circle-fill fs-5"></i>
+                            <div>@TempData["SuccessMessage"]</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                            <div>@TempData["ErrorMessage"]</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+                    @if (TempData["WarningMessage"] != null)
+                    {
+                        <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                            <i class="bi bi-exclamation-circle-fill fs-5"></i>
+                            <div>@TempData["WarningMessage"]</div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @RenderBody()
+                </main>
+
+                <!-- Footer -->
+                <footer class="py-3 px-4 border-top bg-white text-muted small d-flex justify-content-between align-items-center">
+                    <div>&copy; 2026 <strong>AcxiomCRM</strong>. All rights reserved.</div>
+                    <div class="d-flex gap-3">
+                        <span>Environment: <strong class="text-success">Production-Grade</strong></span>
+                        <span>Security: <strong class="text-primary">PBKDF2 + Role RBAC</strong></span>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Anonymous / Authentication Shell -->
+        <main>
+            @RenderBody()
+        </main>
+    }
+
+    <!-- jQuery & Bootstrap Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        // Toggle mobile sidebar
+        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+            document.getElementById('crmSidebar')?.classList.toggle('show');
+        });
+    </script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

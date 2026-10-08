@@ -1,0 +1,186 @@
+@model IEnumerable<AcxiomCRM.Web.ViewModels.OpportunityListViewModel>
+@{
+    ViewData["Title"] = "Opportunity Pipeline";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Sales Opportunities</h4>
+        <p class="text-muted small mb-0">Track active deals, pipeline stages, win probabilities, and weighted revenue</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Index" asp-route-viewMode="kanban" class="btn btn-outline-secondary rounded-3">
+            <i class="bi bi-kanban me-1"></i> Kanban Board
+        </a>
+        <a asp-action="Create" class="btn btn-primary rounded-3 shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> New Opportunity
+        </a>
+    </div>
+</div>
+
+<!-- Filter Toolbar -->
+<div class="crm-filter-bar mb-3">
+    <form method="get" class="row g-2 align-items-center">
+        <input type="hidden" name="viewMode" value="table" />
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" name="search" value="@ViewData["Search"]" class="form-control" placeholder="Search opportunity, customer name or code..." />
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="stageFilter" class="form-select">
+                <option value="">All Pipeline Stages</option>
+                @foreach (var stage in OpportunityStages.All)
+                {
+                    <option value="@stage" selected="@(ViewData["StageFilter"]?.ToString() == stage)">@stage</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="statusFilter" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="Open" selected="@(ViewData["StatusFilter"]?.ToString() == "Open")">Open</option>
+                <option value="Won" selected="@(ViewData["StatusFilter"]?.ToString() == "Won")">Won</option>
+                <option value="Lost" selected="@(ViewData["StatusFilter"]?.ToString() == "Lost")">Lost</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+            <a asp-action="Index" class="btn btn-outline-secondary" title="Clear Filters"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Opportunities Table -->
+<div class="crm-card">
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Opportunity Title</th>
+                    <th>Customer Account</th>
+                    <th>Deal Amount</th>
+                    <th>Stage</th>
+                    <th>Probability</th>
+                    <th>Weighted Value</th>
+                    <th>Close Date</th>
+                    <th>Assigned To</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.OpportunityId" class="fw-bold text-decoration-none text-dark d-block">
+                                    @item.OpportunityName
+                                </a>
+                                <small class="text-muted">Added @item.CreatedDate.ToString("yyyy-MM-dd")</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@item.CustomerName</div>
+                                <small class="text-muted">@item.CustomerCode</small>
+                            </td>
+                            <td class="fw-bold text-dark">₹@item.Amount.ToString("N2")</td>
+                            <td>
+                                @if (item.Stage == OpportunityStages.Qualification)
+                                {
+                                    <span class="badge badge-stage-qualification">Qualification</span>
+                                }
+                                else if (item.Stage == OpportunityStages.Proposal)
+                                {
+                                    <span class="badge badge-stage-proposal">Proposal</span>
+                                }
+                                else if (item.Stage == OpportunityStages.Negotiation)
+                                {
+                                    <span class="badge badge-stage-negotiation">Negotiation</span>
+                                }
+                                else if (item.Stage == OpportunityStages.Won)
+                                {
+                                    <span class="badge badge-stage-won"><i class="bi bi-check-circle me-1"></i>Won</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-stage-lost">Lost</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height: 6px; width: 50px;">
+                                        <div class="progress-bar @(item.Probability >= 70 ? "bg-success" : item.Probability >= 40 ? "bg-warning" : "bg-info")" 
+                                             role="progressbar" style="width: @item.Probability%"></div>
+                                    </div>
+                                    <span class="small fw-semibold">@item.Probability%</span>
+                                </div>
+                            </td>
+                            <td class="fw-semibold text-primary">₹@item.WeightedAmount.ToString("N2")</td>
+                            <td class="small @(item.ExpectedCloseDate.Date < DateTime.UtcNow.Date && item.Status == "Open" ? "text-danger fw-bold" : "text-muted")">
+                                @item.ExpectedCloseDate.ToString("yyyy-MM-dd")
+                            </td>
+                            <td class="small text-muted"><i class="bi bi-person me-1"></i>@item.AssignedToName</td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details" asp-route-id="@item.OpportunityId" class="btn btn-outline-info" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.OpportunityId" class="btn btn-outline-secondary" title="Edit Opportunity">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" title="Delete Opportunity"
+                                            onclick="confirmDeleteOpportunity(@item.OpportunityId, '@item.OpportunityName')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-muted">No opportunities found matching your criteria.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteOpportunityModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete opportunity <strong id="deleteOpportunityName"></strong>?</p>
+                <p class="text-danger small mb-0"><i class="bi bi-exclamation-triangle me-1"></i> Deletion will be permanently logged in audit logs.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteOpportunityForm" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger btn-sm">Yes, Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDeleteOpportunity(id, name) {
+            document.getElementById('deleteOpportunityName').innerText = name;
+            document.getElementById('deleteOpportunityForm').action = '/Opportunities/Delete/' + id;
+            var modal = new bootstrap.Modal(document.getElementById('deleteOpportunityModal'));
+            modal.show();
+        }
+    </script>
+}

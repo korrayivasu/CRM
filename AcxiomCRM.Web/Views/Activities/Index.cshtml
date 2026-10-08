@@ -1,0 +1,119 @@
+@model IEnumerable<AcxiomCRM.Web.ViewModels.ActivityListViewModel>
+@{
+    ViewData["Title"] = "Activity Management";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Customer Activity Logs</h4>
+        <p class="text-muted small mb-0">Record of calls, meetings, emails, and tasks conducted across CRM accounts</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary rounded-3 shadow-sm">
+        <i class="bi bi-plus-lg me-1"></i> Log Activity
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="crm-filter-bar mb-3">
+    <form method="get" class="row g-2 align-items-center">
+        <div class="col-md-4">
+            <select name="typeFilter" class="form-select">
+                <option value="">All Types (Call, Meeting, Email, Task)</option>
+                @foreach (var t in ActivityTypes.All)
+                {
+                    <option value="@t" selected="@(ViewData["TypeFilter"]?.ToString() == t)">@t</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="statusFilter" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="Completed" selected="@(ViewData["StatusFilter"]?.ToString() == "Completed")">Completed</option>
+                <option value="Pending" selected="@(ViewData["StatusFilter"]?.ToString() == "Pending")">Pending</option>
+                <option value="Cancelled" selected="@(ViewData["StatusFilter"]?.ToString() == "Cancelled")">Cancelled</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="dateFilter" value="@ViewData["DateFilter"]" class="form-control" />
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+            <a asp-action="Index" class="btn btn-outline-secondary" title="Clear Filters"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Activity Stream / Table -->
+<div class="crm-card">
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Subject & Summary</th>
+                    <th>Linked Record</th>
+                    <th>Date & Time</th>
+                    <th>Status</th>
+                    <th>Logged By</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var act in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (act.ActivityType == ActivityTypes.Call)
+                                {
+                                    <span class="badge bg-primary-subtle text-primary"><i class="bi bi-telephone-fill me-1"></i> Call</span>
+                                }
+                                else if (act.ActivityType == ActivityTypes.Meeting)
+                                {
+                                    <span class="badge bg-success-subtle text-success"><i class="bi bi-people-fill me-1"></i> Meeting</span>
+                                }
+                                else if (act.ActivityType == ActivityTypes.Email)
+                                {
+                                    <span class="badge bg-warning-subtle text-warning"><i class="bi bi-envelope-fill me-1"></i> Email</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary"><i class="bi bi-check2-square me-1"></i> Task</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@act.Subject</div>
+                                @if (!string.IsNullOrEmpty(act.Description))
+                                {
+                                    <small class="text-secondary text-truncate d-block" style="max-width: 320px;">@act.Description</small>
+                                }
+                            </td>
+                            <td><span class="small fw-semibold text-secondary">@act.RelatedTo</span></td>
+                            <td class="small text-muted"><i class="bi bi-clock me-1"></i>@act.ActivityDate.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                <span class="badge @(act.Status == "Completed" ? "bg-success" : "bg-warning text-dark")">@act.Status</span>
+                            </td>
+                            <td class="small text-muted"><i class="bi bi-person me-1"></i>@act.AssignedToName</td>
+                            <td class="text-end">
+                                <form asp-action="Delete" asp-route-id="@act.ActivityId" method="post" class="d-inline" onsubmit="return confirm('Delete this activity record?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Activity">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">No activities found matching criteria.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

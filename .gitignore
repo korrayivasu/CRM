@@ -1,0 +1,17 @@
+# .NET Core & Visual Studio
+[Bb]in/
+[Oo]bj/
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Database & log runtime files
+*.db-shm
+*.db-wal
+app.db-shm
+app.db-wal
+
+# OS Files
+.DS_Store
+Thumbs.db

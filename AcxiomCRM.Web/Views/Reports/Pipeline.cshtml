@@ -1,0 +1,67 @@
+@model IEnumerable<AcxiomCRM.Web.ViewModels.PipelineReportRow>
+@{
+    ViewData["Title"] = "Pipeline Report";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Stage Pipeline & Weighted Forecast</h4>
+        <p class="text-muted small mb-0">Stage-by-stage distribution, weighted forecast amounts, and pipeline concentration</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer me-1"></i> Print</button>
+        <a asp-action="Pipeline" asp-route-export="csv" class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i> Export CSV</a>
+        <a asp-action="Index" class="btn btn-light border btn-sm">Back to Hub</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="p-3 bg-white border rounded-3 shadow-xs">
+            <span class="text-muted small">Total Open Pipeline Sum</span>
+            <h3 class="fw-bold text-primary mb-0">₹@(((decimal)ViewBag.TotalOpen).ToString("N2"))</h3>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="p-3 bg-white border rounded-3 shadow-xs">
+            <span class="text-muted small">Expected Weighted Revenue Forecast</span>
+            <h3 class="fw-bold text-success mb-0">₹@(((decimal)ViewBag.TotalWeighted).ToString("N2"))</h3>
+        </div>
+    </div>
+</div>
+
+<div class="crm-card">
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Pipeline Stage</th>
+                    <th>Deals In Stage</th>
+                    <th>Total Deal Value</th>
+                    <th>Weighted Value Forecast</th>
+                    <th>% Share of Pipeline</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model)
+                {
+                    <tr>
+                        <td><strong>@row.Stage</strong></td>
+                        <td><span class="badge bg-light text-dark border">@row.Count Deals</span></td>
+                        <td class="fw-bold">₹@row.TotalAmount.ToString("N2")</td>
+                        <td class="fw-semibold text-primary">₹@row.WeightedAmount.ToString("N2")</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
+                                    <div class="progress-bar bg-primary" style="width: @row.PercentageOfPipeline%"></div>
+                                </div>
+                                <span class="small fw-semibold">@row.PercentageOfPipeline%</span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

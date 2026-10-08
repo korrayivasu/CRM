@@ -1,0 +1,53 @@
+@model IEnumerable<AcxiomCRM.Web.Models.Entities.Lead>
+@{
+    ViewData["Title"] = "Lead Report";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Lead Acquisition & Conversion Report</h4>
+        <p class="text-muted small mb-0">Detailed list of captured leads, channels, ownership, and conversion status</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer me-1"></i> Print</button>
+        <a asp-action="Leads" asp-route-export="csv" class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i> Export CSV</a>
+        <a asp-action="Index" class="btn btn-light border btn-sm">Back to Hub</a>
+    </div>
+</div>
+
+<div class="crm-card">
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Lead Code</th>
+                    <th>Contact Name</th>
+                    <th>Email & Phone</th>
+                    <th>Company</th>
+                    <th>Lead Source</th>
+                    <th>Expected Value</th>
+                    <th>Status</th>
+                    <th>Sales Executive</th>
+                    <th>Captured Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var l in Model)
+                {
+                    <tr>
+                        <td><strong>@l.LeadCode</strong></td>
+                        <td>@l.LeadName</td>
+                        <td>@l.Email <br /><small class="text-muted">@l.Phone</small></td>
+                        <td>@(l.CompanyName ?? "-")</td>
+                        <td><span class="badge bg-light text-dark border">@l.Source</span></td>
+                        <td class="fw-bold text-success">₹@l.ExpectedValue.ToString("N2")</td>
+                        <td><span class="badge @(l.Status == "Converted" ? "bg-purple text-white" : "bg-primary-subtle text-primary")">@l.Status</span></td>
+                        <td>@(l.AssignedToUser?.FullName ?? "N/A")</td>
+                        <td>@l.CreatedDate.ToString("yyyy-MM-dd")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
