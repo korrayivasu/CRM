@@ -1,0 +1,382 @@
+@model AcxiomCRM.Web.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Executive Sales Dashboard";
+    Layout = "_Layout";
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">
+            Welcome back, @Model.UserName 
+            <span class="fs-6 fw-normal text-muted">(@Model.UserRole Portal)</span>
+        </h4>
+        <p class="text-muted small mb-0">Role-scoped real-time performance analytics, pipeline forecast, and action items</p>
+    </div>
+
+    <!-- Date Filters Bar (Section 4.3) -->
+    <div class="d-flex align-items-center gap-2">
+        <div class="btn-group btn-group-sm bg-white p-1 rounded-3 border shadow-xs" role="group">
+            <a asp-action="Index" asp-route-dateFilter="Today" class="btn @(Model.DateFilter == "Today" ? "btn-primary" : "btn-light")">Today</a>
+            <a asp-action="Index" asp-route-dateFilter="ThisWeek" class="btn @(Model.DateFilter == "ThisWeek" ? "btn-primary" : "btn-light")">This Week</a>
+            <a asp-action="Index" asp-route-dateFilter="ThisMonth" class="btn @(Model.DateFilter == "ThisMonth" ? "btn-primary" : "btn-light")">This Month</a>
+            <a asp-action="Index" asp-route-dateFilter="All" class="btn @(Model.DateFilter == "All" ? "btn-primary" : "btn-light")">All Time</a>
+        </div>
+    </div>
+</div>
+
+@if (Model.UserRole == AppRoles.Admin)
+{
+    <!-- Admin Security & System Statistics Banner (Section 4.3) -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="p-3 bg-white border rounded-3 shadow-xs d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold">Staff Accounts</span>
+                    <h5 class="fw-bold mb-0">@Model.ActiveUsers Active / @Model.TotalUsers Total</h5>
+                </div>
+                <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 fs-4">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-3 bg-white border rounded-3 shadow-xs d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold">Security Audit Events</span>
+                    <h5 class="fw-bold mb-0">@Model.RecentAuditEventsCount Logged</h5>
+                </div>
+                <div class="bg-success bg-opacity-10 text-success p-2 rounded-3 fs-4">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="p-3 bg-white border rounded-3 shadow-xs d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold">Weighted Forecast</span>
+                    <h5 class="fw-bold text-primary mb-0">₹@Model.WeightedPipelineValue.ToString("N2")</h5>
+                </div>
+                <div class="bg-info bg-opacity-10 text-info p-2 rounded-3 fs-4">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 8 Mandatory KPI Cards (Section 17.11) -->
+<div class="row g-3 mb-4">
+    <!-- Card 1: Total Customers -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="crm-stat-card">
+            <div class="crm-stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-building"></i>
+            </div>
+            <div class="crm-stat-info">
+                <h3>@Model.TotalCustomers</h3>
+                <p>Total Customers</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 2: Total Leads -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="crm-stat-card">
+            <div class="crm-stat-icon bg-info bg-opacity-10 text-info">
+                <i class="bi bi-funnel"></i>
+            </div>
+            <div class="crm-stat-info">
+                <h3>@Model.TotalLeads</h3>
+                <p>Total Leads Captured</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3: Open Leads -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="crm-stat-card">
+            <div class="crm-stat-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-person-lines-fill"></i>
+            </div>
+            <div class="crm-stat-info">
+                <h3>@Model.OpenLeads</h3>
+                <p>Active Open Leads</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 4: Total Opportunities -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="crm-stat-card">
+            <div class="crm-stat-icon bg-secondary bg-opacity-10 text-secondary">
+                <i class="bi bi-briefcase"></i>
+            </div>
+            <div class="crm-stat-info">
+                <h3>@Model.TotalOpportunities</h3>
+                <p>Total Opportunities</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 5: Open Opportunities -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="crm-stat-card">
+            <div class="crm-stat-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-lightning-charge"></i>
+            </div>
+            <div class="crm-stat-info">
+                <h3>@Model.OpenOpportunities</h3>
+                <p>Open Pipeline Deals</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 6: Won Opportunities -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="crm-stat-card">
+            <div class="crm-stat-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="crm-stat-info">
+                <h3 class="text-success">@Model.WonOpportunities</h3>
+                <p>Won Deals</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 7: Lost Opportunities -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="crm-stat-card">
+            <div class="crm-stat-icon bg-danger bg-opacity-10 text-danger">
+                <i class="bi bi-x-circle"></i>
+            </div>
+            <div class="crm-stat-info">
+                <h3 class="text-danger">@Model.LostOpportunities</h3>
+                <p>Lost Opportunities</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 8: Total Pipeline Value -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="crm-stat-card" style="background: linear-gradient(135deg, #1e3a8a, #1d4ed8); color: white;">
+            <div class="crm-stat-icon bg-white bg-opacity-20 text-white">
+                <i class="bi bi-currency-rupee"></i>
+            </div>
+            <div class="crm-stat-info text-white">
+                <h3 class="text-white">₹@Model.TotalPipelineValue.ToString("N0")</h3>
+                <p class="text-white-50">Total Pipeline Value</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3 Mandatory Chart.js Visualizations (Section 17.12) -->
+<div class="row g-4 mb-4">
+    <!-- Chart 1: Lead Status (Donut) -->
+    <div class="col-lg-4">
+        <div class="crm-card h-100">
+            <div class="crm-card-header">
+                <h5><i class="bi bi-pie-chart me-2 text-primary"></i>Lead Status Breakdown</h5>
+            </div>
+            <div class="crm-card-body d-flex flex-column align-items-center justify-content-center">
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="leadStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 2: Opportunity Pipeline (Bar) -->
+    <div class="col-lg-4">
+        <div class="crm-card h-100">
+            <div class="crm-card-header">
+                <h5><i class="bi bi-bar-chart-steps me-2 text-warning"></i>Opportunity Pipeline</h5>
+            </div>
+            <div class="crm-card-body">
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="pipelineStageChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 3: Monthly Sales Outcomes (Line) -->
+    <div class="col-lg-4">
+        <div class="crm-card h-100">
+            <div class="crm-card-header">
+                <h5><i class="bi bi-graph-up me-2 text-success"></i>Monthly Sales Trend</h5>
+            </div>
+            <div class="crm-card-body">
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="monthlySalesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lower Widgets: Upcoming Follow-Ups & Recent Deals -->
+<div class="row g-4">
+    <!-- Upcoming Follow-Ups Widget -->
+    <div class="col-lg-6">
+        <div class="crm-card h-100">
+            <div class="crm-card-header">
+                <h5><i class="bi bi-calendar-event me-2 text-primary"></i>Upcoming Follow-Ups</h5>
+                <a asp-controller="FollowUps" asp-action="Index" class="btn btn-sm btn-link text-decoration-none">View All</a>
+            </div>
+            <div class="crm-card-body p-0">
+                @if (Model.UpcomingFollowUps.Any())
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var fu in Model.UpcomingFollowUps)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                                <div>
+                                    <div class="fw-semibold text-dark">@fu.Subject</div>
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock me-1"></i>@fu.FollowUpDate.ToString("MMM dd, yyyy HH:mm") &bull; @fu.FollowUpType
+                                    </small>
+                                </div>
+                                <span class="badge bg-primary-subtle text-primary">@fu.FollowUpType</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted small text-center py-4 mb-0">No upcoming follow-ups scheduled.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Opportunities Widget -->
+    <div class="col-lg-6">
+        <div class="crm-card h-100">
+            <div class="crm-card-header">
+                <h5><i class="bi bi-lightning me-2 text-warning"></i>Recent Opportunities</h5>
+                <a asp-controller="Opportunities" asp-action="Index" class="btn btn-sm btn-link text-decoration-none">View All</a>
+            </div>
+            <div class="crm-card-body p-0">
+                @if (Model.RecentOpportunities.Any())
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var opp in Model.RecentOpportunities)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                                <div>
+                                    <div class="fw-semibold text-dark">@opp.OpportunityName</div>
+                                    <small class="text-muted">Stage: @opp.Stage &bull; Probability: @opp.Probability%</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-dark">₹@opp.Amount.ToString("N0")</div>
+                                    <span class="badge @(opp.Status == "Won" ? "bg-success" : opp.Status == "Lost" ? "bg-danger" : "bg-light text-dark border") small">
+                                        @opp.Status
+                                    </span>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted small text-center py-4 mb-0">No opportunities recorded in this period.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Chart 1: Lead Status (Doughnut)
+        var leadCtx = document.getElementById('leadStatusChart').getContext('2d');
+        new Chart(leadCtx, {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.LeadStatusChart.Labels)),
+                datasets: [{
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.LeadStatusChart.Data)),
+                    backgroundColor: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.LeadStatusChart.BackgroundColors)),
+                    borderWidth: 2,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 11 } }
+                    }
+                }
+            }
+        });
+
+        // Chart 2: Opportunity Pipeline (Bar)
+        var pipeCtx = document.getElementById('pipelineStageChart').getContext('2d');
+        new Chart(pipeCtx, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OpportunityPipelineChart.Labels)),
+                datasets: [{
+                    label: 'Pipeline Value (₹)',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OpportunityPipelineChart.Data)),
+                    backgroundColor: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.OpportunityPipelineChart.BackgroundColors)),
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(val) { return '₹' + (val >= 100000 ? (val/100000) + 'L' : val); }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Chart 3: Monthly Sales Trend (Line)
+        var salesCtx = document.getElementById('monthlySalesChart').getContext('2d');
+        new Chart(salesCtx, {
+            type: 'line',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlySalesChart.Labels)),
+                datasets: [{
+                    label: 'Won Revenue (₹)',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.MonthlySalesChart.Data)),
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#1d4ed8'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(val) { return '₹' + (val >= 100000 ? (val/100000) + 'L' : val); }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    </script>
+}

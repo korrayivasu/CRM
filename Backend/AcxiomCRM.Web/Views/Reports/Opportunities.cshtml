@@ -1,0 +1,53 @@
+@model IEnumerable<AcxiomCRM.Web.Models.Entities.Opportunity>
+@{
+    ViewData["Title"] = "Opportunity Report";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Opportunity Portfolio Report</h4>
+        <p class="text-muted small mb-0">Stage distribution, win probability, deal volume, and expected close dates</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer me-1"></i> Print</button>
+        <a asp-action="Opportunities" asp-route-export="csv" class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i> Export CSV</a>
+        <a asp-action="Index" class="btn btn-light border btn-sm">Back to Hub</a>
+    </div>
+</div>
+
+<div class="crm-card">
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Opportunity Title</th>
+                    <th>Customer</th>
+                    <th>Amount (₹)</th>
+                    <th>Stage</th>
+                    <th>Probability</th>
+                    <th>Weighted Value (₹)</th>
+                    <th>Target Close Date</th>
+                    <th>Status</th>
+                    <th>Owner</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in Model)
+                {
+                    <tr>
+                        <td><strong>@o.OpportunityName</strong></td>
+                        <td>@(o.Customer?.CustomerName ?? "N/A")</td>
+                        <td class="fw-bold">₹@o.Amount.ToString("N2")</td>
+                        <td><span class="badge bg-light text-dark border">@o.Stage</span></td>
+                        <td>@o.Probability%</td>
+                        <td class="fw-semibold text-primary">₹@o.WeightedAmount.ToString("N2")</td>
+                        <td>@o.ExpectedCloseDate.ToString("yyyy-MM-dd")</td>
+                        <td><span class="badge @(o.Status == "Won" ? "bg-success" : o.Status == "Lost" ? "bg-danger" : "bg-warning text-dark")">@o.Status</span></td>
+                        <td>@(o.AssignedToUser?.FullName ?? "N/A")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

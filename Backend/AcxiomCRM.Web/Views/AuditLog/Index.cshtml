@@ -1,0 +1,189 @@
+@model AcxiomCRM.Web.ViewModels.AuditLogFilterViewModel
+@{
+    ViewData["Title"] = "Security & Business Audit Trail";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Audit Trail & Security Logs</h4>
+        <p class="text-muted small mb-0">Append-only immutable record of all security, authentication and business operations</p>
+    </div>
+    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
+        <i class="bi bi-shield-lock-fill me-1"></i> Tamper-Protected Append Only
+    </span>
+</div>
+
+<!-- Filters Bar -->
+<div class="crm-filter-bar mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small">Module / Entity</label>
+            <select name="module" class="form-select">
+                <option value="">All Entities</option>
+                @if (ViewBag.Modules != null)
+                {
+                    foreach (var mod in (List<string>)ViewBag.Modules)
+                    {
+                        <option value="@mod" selected="@(Model.Module == mod)">@mod</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Action Type</label>
+            <select name="actionType" class="form-select">
+                <option value="">All Actions</option>
+                @if (ViewBag.Actions != null)
+                {
+                    foreach (var act in (List<string>)ViewBag.Actions)
+                    {
+                        <option value="@act" selected="@(Model.Action == act)">@act</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">From Date</label>
+            <input type="date" name="fromDate" value="@(Model.FromDate?.ToString("yyyy-MM-dd"))" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small">To Date</label>
+            <input type="date" name="toDate" value="@(Model.ToDate?.ToString("yyyy-MM-dd"))" class="form-control" />
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+            <a asp-action="Index" class="btn btn-outline-secondary" title="Reset Filters"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Audit Log Table -->
+<div class="crm-card">
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Timestamp (UTC)</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Module / Entity</th>
+                    <th>Record ID</th>
+                    <th>Result</th>
+                    <th>IP Address</th>
+                    <th class="text-end">Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Logs.Any())
+                {
+                    foreach (var log in Model.Logs)
+                    {
+                        <tr>
+                            <td class="text-muted small">@log.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                            <td class="fw-semibold">
+                                <i class="bi bi-person me-1 text-secondary"></i>@(log.UserName ?? "System")
+                            </td>
+                            <td>
+                                @if (log.Action == AuditActions.Login)
+                                {
+                                    <span class="badge bg-success-subtle text-success">Login</span>
+                                }
+                                else if (log.Action == AuditActions.FailedLogin || log.Action == AuditActions.Lockout)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger">@log.Action</span>
+                                }
+                                else if (log.Action == AuditActions.Create)
+                                {
+                                    <span class="badge bg-primary-subtle text-primary">Create</span>
+                                }
+                                else if (log.Action == AuditActions.Update || log.Action == AuditActions.RoleChange)
+                                {
+                                    <span class="badge bg-warning-subtle text-warning">@log.Action</span>
+                                }
+                                else if (log.Action == AuditActions.Delete)
+                                {
+                                    <span class="badge bg-danger text-white">Delete</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary">@log.Action</span>
+                                }
+                            </td>
+                            <td><span class="badge bg-light text-dark border">@log.EntityName</span></td>
+                            <td><code class="small text-muted">@(log.RecordId ?? "-")</code></td>
+                            <td>
+                                @if (log.Result == "Success")
+                                {
+                                    <span class="badge bg-success text-white">Success</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger text-white">Failed</span>
+                                }
+                            </td>
+                            <td class="small text-muted">@log.IpAddress</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-info" 
+                                        onclick="showAuditModal('@log.Action', '@log.EntityName', '@log.RecordId', '@(log.OldValue?.Replace("'", "\\'"))', '@(log.NewValue?.Replace("'", "\\'"))', '@(log.Details?.Replace("'", "\\'"))')">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">No audit logs matching criteria found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal to inspect audit details and diffs -->
+<div class="modal fade" id="auditDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalActionTitle">Audit Record Inspector</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="fw-bold small text-muted">Event Summary / Details</label>
+                    <div id="modalDetailsText" class="p-2 bg-light rounded small text-break"></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold small text-danger"><i class="bi bi-dash-circle me-1"></i> Old Value / State</label>
+                        <pre id="modalOldValue" class="p-2 bg-light border rounded small" style="max-height: 200px; overflow-y: auto;"></pre>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="fw-bold small text-success"><i class="bi bi-plus-circle me-1"></i> New Value / State</label>
+                        <pre id="modalNewValue" class="p-2 bg-light border rounded small" style="max-height: 200px; overflow-y: auto;"></pre>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showAuditModal(action, entity, recordId, oldVal, newVal, details) {
+            document.getElementById('modalActionTitle').innerText = action + ' on ' + entity + ' (' + (recordId || 'N/A') + ')';
+            document.getElementById('modalDetailsText').innerText = details || 'No additional details logged.';
+            document.getElementById('modalOldValue').innerText = oldVal || 'None / Not Applicable';
+            document.getElementById('modalNewValue').innerText = newVal || 'None / Not Applicable';
+            
+            var modal = new bootstrap.Modal(document.getElementById('auditDetailModal'));
+            modal.show();
+        }
+    </script>
+}

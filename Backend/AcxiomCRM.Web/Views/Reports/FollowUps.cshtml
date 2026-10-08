@@ -1,0 +1,55 @@
+@model IEnumerable<AcxiomCRM.Web.Models.Entities.FollowUp>
+@{
+    ViewData["Title"] = "Follow-Up Report";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Follow-Up & Touchpoint Report</h4>
+        <p class="text-muted small mb-0">Record of scheduled, completed, missed, and overdue activities</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer me-1"></i> Print</button>
+        <a asp-action="FollowUps" asp-route-export="csv" class="btn btn-primary btn-sm"><i class="bi bi-download me-1"></i> Export CSV</a>
+        <a asp-action="Index" class="btn btn-light border btn-sm">Back to Hub</a>
+    </div>
+</div>
+
+<div class="crm-card">
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Type</th>
+                    <th>Associated With</th>
+                    <th>Follow-Up Date</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in Model)
+                {
+                    <tr>
+                        <td><strong>@f.Subject</strong></td>
+                        <td><span class="badge bg-light text-dark border">@f.FollowUpType</span></td>
+                        <td>
+                            @(f.Customer != null ? $"Customer: {f.Customer.CustomerName}" : f.Lead != null ? $"Lead: {f.Lead.LeadName}" : "N/A")
+                        </td>
+                        <td>@f.FollowUpDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>
+                            <span class="badge @(f.Status == "Completed" ? "bg-success" : f.Status == "Missed" ? "bg-danger" : "bg-warning text-dark")">
+                                @f.Status
+                            </span>
+                        </td>
+                        <td>@(f.AssignedToUser?.FullName ?? "N/A")</td>
+                        <td class="small text-muted">@(f.Remarks ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

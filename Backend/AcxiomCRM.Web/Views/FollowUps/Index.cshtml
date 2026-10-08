@@ -1,0 +1,178 @@
+@model IEnumerable<AcxiomCRM.Web.ViewModels.FollowUpListViewModel>
+@{
+    ViewData["Title"] = "Follow-Up Schedules";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Follow-Up Tasks & Reminders</h4>
+        <p class="text-muted small mb-0">Schedule and execute client touchpoints across accounts, leads, and opportunities</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary rounded-3 shadow-sm">
+        <i class="bi bi-calendar-plus me-1"></i> Schedule Follow-Up
+    </a>
+</div>
+
+<!-- Filter Toolbar -->
+<div class="crm-filter-bar mb-3">
+    <form method="get" class="row g-2 align-items-center">
+        <div class="col-md-3">
+            <select name="statusFilter" class="form-select">
+                <option value="">All Statuses</option>
+                @foreach (var s in FollowUpStatuses.All)
+                {
+                    <option value="@s" selected="@(ViewData["StatusFilter"]?.ToString() == s)">@s</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="typeFilter" class="form-select">
+                <option value="">All Types (Call, Meeting...)</option>
+                @foreach (var t in ActivityTypes.All)
+                {
+                    <option value="@t" selected="@(ViewData["TypeFilter"]?.ToString() == t)">@t</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="dateFilter" value="@ViewData["DateFilter"]" class="form-control" />
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+            <a asp-action="Index" class="btn btn-outline-secondary" title="Clear Filters"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Follow-ups Table -->
+<div class="crm-card">
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Type</th>
+                    <th>Associated CRM Record</th>
+                    <th>Scheduled Date</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr class="@(item.IsOverdue ? "table-danger bg-opacity-25" : "")">
+                            <td>
+                                <div class="fw-bold text-dark">@item.Subject</div>
+                                @if (!string.IsNullOrEmpty(item.Remarks))
+                                {
+                                    <small class="text-secondary text-truncate d-block" style="max-width: 250px;">@item.Remarks</small>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">@item.FollowUpType</span>
+                            </td>
+                            <td>
+                                <span class="small fw-semibold text-secondary">@item.RelatedTo</span>
+                            </td>
+                            <td>
+                                <div class="@(item.IsOverdue ? "text-danger fw-bold" : "text-dark")">
+                                    <i class="bi bi-calendar3 me-1"></i>@item.FollowUpDate.ToString("yyyy-MM-dd HH:mm")
+                                </div>
+                                @if (item.IsOverdue)
+                                {
+                                    <span class="badge bg-danger text-white small"><i class="bi bi-clock-history me-1"></i>Overdue</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.Status == FollowUpStatuses.Completed)
+                                {
+                                    <span class="badge bg-success text-white"><i class="bi bi-check-circle me-1"></i>Completed</span>
+                                }
+                                else if (item.Status == FollowUpStatuses.Missed)
+                                {
+                                    <span class="badge bg-danger text-white">Missed</span>
+                                }
+                                else if (item.Status == FollowUpStatuses.Cancelled)
+                                {
+                                    <span class="badge bg-secondary text-white">Cancelled</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Planned</span>
+                                }
+                            </td>
+                            <td class="small text-muted">
+                                <i class="bi bi-person me-1"></i>@item.AssignedToName
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    @if (item.Status == FollowUpStatuses.Planned)
+                                    {
+                                        <button type="button" class="btn btn-outline-success" title="Mark as Completed"
+                                                onclick="openCompleteModal(@item.FollowUpId, '@item.Subject')">
+                                            <i class="bi bi-check2"></i>
+                                        </button>
+                                    }
+                                    <form asp-action="Delete" asp-route-id="@item.FollowUpId" method="post" class="d-inline" onsubmit="return confirm('Delete this follow-up?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">No follow-up items found.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal to Mark Completed with Remarks -->
+<div class="modal fade" id="completeFollowUpModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Complete Follow-Up</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="completeFollowUpForm" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <p>Marking follow-up: <strong id="completeSubjectTitle"></strong> as Completed.</p>
+                    <div class="mb-3">
+                        <label class="form-label small">Outcome / Meeting Notes</label>
+                        <textarea name="completionRemarks" class="form-control" rows="3" placeholder="Client feedback, next steps agreed, commitments..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success btn-sm">Save & Complete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openCompleteModal(id, subject) {
+            document.getElementById('completeSubjectTitle').innerText = subject;
+            document.getElementById('completeFollowUpForm').action = '/FollowUps/Complete/' + id;
+            var modal = new bootstrap.Modal(document.getElementById('completeFollowUpModal'));
+            modal.show();
+        }
+    </script>
+}

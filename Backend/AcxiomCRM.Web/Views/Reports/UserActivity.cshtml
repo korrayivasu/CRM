@@ -1,0 +1,48 @@
+@model IEnumerable<AcxiomCRM.Web.ViewModels.UserActivityReportRow>
+@{
+    ViewData["Title"] = "User Activity Report";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">User Activity & Productivity Report</h4>
+        <p class="text-muted small mb-0">Action and volume metrics across all team members and sales executives</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer me-1"></i> Print</button>
+        <a asp-action="Index" class="btn btn-light border btn-sm">Back to Hub</a>
+    </div>
+</div>
+
+<div class="crm-card">
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Customers Created</th>
+                    <th>Leads Assigned</th>
+                    <th>Opportunities</th>
+                    <th>Activities Logged</th>
+                    <th>Follow-Ups Scheduled</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model)
+                {
+                    <tr>
+                        <td class="fw-bold"><i class="bi bi-person me-1"></i>@row.UserName</td>
+                        <td><span class="badge bg-light text-dark border">@row.Role</span></td>
+                        <td><span class="badge bg-primary-subtle text-primary">@row.CustomersCreated</span></td>
+                        <td><span class="badge bg-info-subtle text-info">@row.LeadsAssigned</span></td>
+                        <td><span class="badge bg-warning-subtle text-warning">@row.OpportunitiesCount</span></td>
+                        <td><span class="badge bg-success-subtle text-success">@row.ActivitiesLogged</span></td>
+                        <td><span class="badge bg-secondary-subtle text-secondary">@row.FollowUpsScheduled</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

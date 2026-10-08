@@ -1,0 +1,158 @@
+@model IEnumerable<AcxiomCRM.Web.ViewModels.CustomerListViewModel>
+@{
+    ViewData["Title"] = "Customer Management";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Customer Accounts</h4>
+        <p class="text-muted small mb-0">Manage customer master data, corporate profiles, and activity relationships</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary rounded-3 shadow-sm">
+        <i class="bi bi-person-plus me-1"></i> New Customer
+    </a>
+</div>
+
+<!-- Search & Filtering Bar -->
+<div class="crm-filter-bar mb-3">
+    <form method="get" class="row g-2 align-items-center">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" name="search" value="@ViewData["Search"]" class="form-control" placeholder="Search by name, email, phone, or company..." />
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="statusFilter" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="@CustomerStatuses.Active" selected="@(ViewData["StatusFilter"]?.ToString() == CustomerStatuses.Active)">Active</option>
+                <option value="@CustomerStatuses.Inactive" selected="@(ViewData["StatusFilter"]?.ToString() == CustomerStatuses.Inactive)">Inactive</option>
+                <option value="@CustomerStatuses.Prospect" selected="@(ViewData["StatusFilter"]?.ToString() == CustomerStatuses.Prospect)">Prospect</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+            <a asp-action="Index" class="btn btn-outline-secondary" title="Clear Filters"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Customers Table -->
+<div class="crm-card">
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Customer Name</th>
+                    <th>Contact Info</th>
+                    <th>Company / Location</th>
+                    <th>Status</th>
+                    <th>Opportunities</th>
+                    <th>Owner</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td><span class="badge bg-light text-dark border fw-bold">@item.CustomerCode</span></td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.CustomerId" class="fw-bold text-decoration-none text-dark d-block">
+                                    @item.CustomerName
+                                </a>
+                                <small class="text-muted">Added @item.CreatedDate.ToString("yyyy-MM-dd")</small>
+                            </td>
+                            <td>
+                                <div><i class="bi bi-envelope me-1 text-muted small"></i>@item.Email</div>
+                                <div class="small text-muted"><i class="bi bi-telephone me-1 text-muted"></i>@item.Phone</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@(item.CompanyName ?? "-")</div>
+                                <div class="small text-muted">@item.City, @item.State</div>
+                            </td>
+                            <td>
+                                @if (item.Status == CustomerStatuses.Active)
+                                {
+                                    <span class="badge bg-success-subtle text-success">Active</span>
+                                }
+                                else if (item.Status == CustomerStatuses.Inactive)
+                                {
+                                    <span class="badge bg-danger-subtle text-danger">Inactive</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-info-subtle text-info">@item.Status</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary">@item.OpportunityCount Deals</span>
+                            </td>
+                            <td>
+                                <span class="small text-muted"><i class="bi bi-person me-1"></i>@item.CreatedByName</span>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="Details" asp-route-id="@item.CustomerId" class="btn btn-outline-info" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.CustomerId" class="btn btn-outline-secondary" title="Edit Customer">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" title="Delete Customer"
+                                            onclick="confirmDeleteCustomer(@item.CustomerId, '@item.CustomerName')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">No customers found matching your criteria.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteCustomerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete customer <strong id="deleteCustomerName"></strong>?</p>
+                <p class="text-danger small mb-0"><i class="bi bi-exclamation-triangle me-1"></i> This action will be recorded in the audit trail.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteCustomerForm" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger btn-sm">Yes, Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDeleteCustomer(id, name) {
+            document.getElementById('deleteCustomerName').innerText = name;
+            document.getElementById('deleteCustomerForm').action = '/Customers/Delete/' + id;
+            var modal = new bootstrap.Modal(document.getElementById('deleteCustomerModal'));
+            modal.show();
+        }
+    </script>
+}

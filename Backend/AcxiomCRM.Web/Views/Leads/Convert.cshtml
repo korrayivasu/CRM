@@ -1,0 +1,104 @@
+@model AcxiomCRM.Web.ViewModels.ConvertLeadViewModel
+@{
+    ViewData["Title"] = "Convert Lead to Customer";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="crm-card">
+            <div class="crm-card-header bg-success-subtle text-success">
+                <h5 class="fw-bold"><i class="bi bi-arrow-repeat me-2"></i>Lead Conversion Workflow</h5>
+                <span class="badge bg-success text-white">Section 8 & 17.2</span>
+            </div>
+            <div class="crm-card-body">
+                <div class="alert alert-info small mb-4">
+                    <i class="bi bi-info-circle me-1"></i> Converting this lead will automatically create or link a <strong>Customer Account</strong> using the lead's contact details, mark the lead as <strong>Converted</strong>, and optionally generate an active <strong>Sales Opportunity</strong>. This transition is permanently recorded in the Audit Trail.
+                </div>
+
+                <!-- Lead Source Information Preview -->
+                <div class="p-3 bg-light rounded-3 mb-4">
+                    <h6 class="fw-bold text-dark mb-2">Lead Information to be Transferred:</h6>
+                    <div class="row g-2 small">
+                        <div class="col-sm-6"><strong>Lead Code:</strong> @Model.LeadCode</div>
+                        <div class="col-sm-6"><strong>Contact Name:</strong> @Model.LeadName</div>
+                        <div class="col-sm-6"><strong>Email:</strong> @Model.Email</div>
+                        <div class="col-sm-6"><strong>Phone:</strong> @Model.Phone</div>
+                        <div class="col-sm-6"><strong>Company:</strong> @(Model.CompanyName ?? "N/A")</div>
+                        <div class="col-sm-6"><strong>Estimated Value:</strong> ₹@Model.ExpectedValue.ToString("N2")</div>
+                    </div>
+                </div>
+
+                <form asp-action="Convert" method="post" id="convertLeadForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="LeadId" />
+                    <input type="hidden" asp-for="LeadCode" />
+                    <input type="hidden" asp-for="LeadName" />
+                    <input type="hidden" asp-for="Email" />
+                    <input type="hidden" asp-for="Phone" />
+                    <input type="hidden" asp-for="CompanyName" />
+                    <input type="hidden" asp-for="ExpectedValue" />
+                    <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+                    <div class="form-check form-switch mb-3 p-0 ps-5">
+                        <input class="form-check-input" type="checkbox" asp-for="CreateOpportunity" id="createOppSwitch" onchange="toggleOppFields()">
+                        <label class="form-check-label fw-bold" for="createOppSwitch">
+                            Create a Sales Opportunity immediately upon conversion
+                        </label>
+                    </div>
+
+                    <div id="oppFieldsContainer">
+                        <div class="card border rounded-3 p-3 bg-light-subtle mb-3">
+                            <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-graph-up me-1"></i>Opportunity Parameters</h6>
+                            
+                            <div class="mb-3">
+                                <label asp-for="OpportunityName" class="form-label"></label> <span class="text-danger">*</span>
+                                <input asp-for="OpportunityName" class="form-control" />
+                                <span asp-validation-for="OpportunityName" class="field-validation-error"></span>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="OpportunityAmount" class="form-label"></label> <span class="text-danger">*</span>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₹</span>
+                                        <input asp-for="OpportunityAmount" class="form-control" type="number" step="1000" min="0.01" />
+                                    </div>
+                                    <span asp-validation-for="OpportunityAmount" class="field-validation-error"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Probability" class="form-label"></label> (%) <span class="text-danger">*</span>
+                                    <input asp-for="Probability" class="form-control" type="number" min="0" max="100" />
+                                    <span asp-validation-for="Probability" class="field-validation-error"></span>
+                                </div>
+                            </div>
+
+                            <div class="mb-2">
+                                <label asp-for="ExpectedCloseDate" class="form-label"></label> <span class="text-danger">*</span>
+                                <input asp-for="ExpectedCloseDate" class="form-control" type="date" min="@DateTime.UtcNow.ToString("yyyy-MM-dd")" />
+                                <span asp-validation-for="ExpectedCloseDate" class="field-validation-error"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                        <a asp-action="Details" asp-route-id="@Model.LeadId" class="btn btn-light border">Cancel</a>
+                        <button type="submit" class="btn btn-success px-4 fw-semibold shadow-sm">
+                            <i class="bi bi-check2-circle me-1"></i> Complete Conversion
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function toggleOppFields() {
+            var checked = document.getElementById('createOppSwitch').checked;
+            document.getElementById('oppFieldsContainer').style.display = checked ? 'block' : 'none';
+        }
+    </script>
+}

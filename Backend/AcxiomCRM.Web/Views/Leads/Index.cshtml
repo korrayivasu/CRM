@@ -1,0 +1,195 @@
+@model IEnumerable<AcxiomCRM.Web.ViewModels.LeadListViewModel>
+@{
+    ViewData["Title"] = "Lead Management";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">Sales Leads</h4>
+        <p class="text-muted small mb-0">Capture prospective buyers, assign sales executives, qualify and convert to accounts</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary rounded-3 shadow-sm">
+        <i class="bi bi-funnel me-1"></i> New Lead
+    </a>
+</div>
+
+<!-- Filter Toolbar -->
+<div class="crm-filter-bar mb-3">
+    <form method="get" class="row g-2 align-items-center">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" name="search" value="@ViewData["Search"]" class="form-control" placeholder="Search by name, company, email..." />
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="statusFilter" class="form-select">
+                <option value="">All Statuses</option>
+                @foreach (var s in LeadStatuses.All)
+                {
+                    <option value="@s" selected="@(ViewData["StatusFilter"]?.ToString() == s)">@s</option>
+                }
+            </select>
+        </div>
+        @if (User.IsInRole(AppRoles.Admin) || User.IsInRole(AppRoles.Manager))
+        {
+            <div class="col-md-3">
+                <select name="assignedFilter" asp-items="ViewBag.Users" class="form-select">
+                    <option value="">All Assigned Executives</option>
+                </select>
+            </div>
+        }
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-secondary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+            <a asp-action="Index" class="btn btn-outline-secondary" title="Clear Filters"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Leads Table -->
+<div class="crm-card">
+    <div class="table-responsive">
+        <table class="table crm-table align-middle">
+            <thead>
+                <tr>
+                    <th>Lead Code</th>
+                    <th>Lead Name</th>
+                    <th>Company / Source</th>
+                    <th>Expected Value</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td><span class="badge bg-light text-dark border fw-bold">@item.LeadCode</span></td>
+                            <td>
+                                <a asp-action="Details" asp-route-id="@item.LeadId" class="fw-bold text-decoration-none text-dark d-block">
+                                    @item.LeadName
+                                </a>
+                                <div class="small text-muted">@item.Email &bull; @item.Phone</div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@(item.CompanyName ?? "-")</div>
+                                <span class="badge bg-light text-secondary border small">@item.Source</span>
+                            </td>
+                            <td class="fw-bold text-success">
+                                ₹@item.ExpectedValue.ToString("N2")
+                            </td>
+                            <td>
+                                @if (item.Priority == "High")
+                                {
+                                    <span class="badge bg-danger-subtle text-danger">High</span>
+                                }
+                                else if (item.Priority == "Medium")
+                                {
+                                    <span class="badge bg-warning-subtle text-warning">Medium</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary">Low</span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.Status == LeadStatuses.New)
+                                {
+                                    <span class="badge badge-status-new">New</span>
+                                }
+                                else if (item.Status == LeadStatuses.Contacted)
+                                {
+                                    <span class="badge badge-status-contacted">Contacted</span>
+                                }
+                                else if (item.Status == LeadStatuses.Qualified)
+                                {
+                                    <span class="badge badge-status-qualified">Qualified</span>
+                                }
+                                else if (item.Status == LeadStatuses.Converted)
+                                {
+                                    <span class="badge badge-status-converted"><i class="bi bi-check-all me-1"></i>Converted</span>
+                                }
+                                else if (item.Status == LeadStatuses.Lost)
+                                {
+                                    <span class="badge badge-status-lost">Lost</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary">@item.Status</span>
+                                }
+                            </td>
+                            <td class="small text-muted">
+                                <i class="bi bi-person me-1"></i>@item.AssignedToName
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    @if (item.Status != LeadStatuses.Converted)
+                                    {
+                                        <a asp-action="Convert" asp-route-id="@item.LeadId" class="btn btn-outline-success" title="Convert to Customer">
+                                            <i class="bi bi-arrow-repeat"></i> Convert
+                                        </a>
+                                    }
+                                    <a asp-action="Details" asp-route-id="@item.LeadId" class="btn btn-outline-info" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a asp-action="Edit" asp-route-id="@item.LeadId" class="btn btn-outline-secondary" title="Edit Lead">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" title="Delete Lead"
+                                            onclick="confirmDeleteLead(@item.LeadId, '@item.LeadName')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">No leads found matching your criteria.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Delete Lead Modal -->
+<div class="modal fade" id="deleteLeadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete lead <strong id="deleteLeadName"></strong>?</p>
+                <p class="text-danger small mb-0"><i class="bi bi-exclamation-triangle me-1"></i> Deletion will be logged in the audit trail.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteLeadForm" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger btn-sm">Yes, Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDeleteLead(id, name) {
+            document.getElementById('deleteLeadName').innerText = name;
+            document.getElementById('deleteLeadForm').action = '/Leads/Delete/' + id;
+            var modal = new bootstrap.Modal(document.getElementById('deleteLeadModal'));
+            modal.show();
+        }
+    </script>
+}
